@@ -48,8 +48,10 @@ export class DropboxService {
   }
 
   private sanitizeFileName(fileName: string): string {
-    return fileName.replace(/[^a-zA-Z0-9.-]/g, '_');
-  }
+    const baseName = fileName.replace(/[^a-zA-Z0-9.-]/g, '_');
+    const timestamp = Date.now();
+    return `${timestamp}_${baseName}`;
+}
 
   private getFolderPath(fileExtension: string): string {
     if (this.ALLOWED_EXTENSIONS.pdf.includes(fileExtension)) {

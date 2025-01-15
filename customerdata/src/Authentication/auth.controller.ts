@@ -1,8 +1,6 @@
 import { Controller, Post, Body, UseGuards, Request } from '@nestjs/common';
 import { AuthService } from './auth.service';
-import { JwtAuthGuard } from './jwt-auth.guard';
 import { Public } from './decorators/public.decorator';
-import { Request as ExpressRequest } from 'express';
 
 @Controller('auth')
 export class AuthController {
@@ -18,10 +16,9 @@ export class AuthController {
     return this.authService.login(user);
   }
 
-  @UseGuards(JwtAuthGuard)
-  @Post('refresh')
-  refresh(@Request() req: ExpressRequest) {
-    const user = req.user;
-    return this.authService.login(user);
+  @Public()
+  @Post('refresh-token')
+  async refreshToken(@Body() body: { refreshToken: string }) {
+      return this.authService.refreshAccessToken(body.refreshToken);
   }
 }

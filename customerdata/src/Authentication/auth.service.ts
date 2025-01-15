@@ -1,6 +1,6 @@
 import { Injectable, UnauthorizedException } from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
-import * as bcrypt from 'bcrypt';
+import { comparePassword, hashPassword } from 'src/Utils/password.utils';
 
 @Injectable()
 export class AuthService {
@@ -15,23 +15,37 @@ export class AuthService {
             {
                 id: 1,
                 username: 'test',
-                password: await bcrypt.hash('123456', 10),
+                password: await hashPassword('123456'),
             },
             {
                 id: 2,
                 username: 'admin',
-                password: await bcrypt.hash('admin123', 10),
+                password: await hashPassword('admin123'),
             },
         ];
     }
 
     async validateUser(username: string, password: string): Promise<any> {
         const user = this.users.find((u) => u.username === username);
-        if (user && (await bcrypt.compare(password, user.password))) {
+        if (user && (await comparePassword(password, user.password))) {
             const { password, ...result } = user;
             return result;
         }
         return null;
+    }
+
+    async refreshAccessToken(refreshToken: string) {
+        try {
+            const payload = this.jwtService.verify(refreshToken);
+            const user = this.users.find((u) => u.id === payload.sub);
+            if (!user) throw new UnauthorizedException('Invalid token');
+            
+            return {
+                access_token: this.jwtService.sign({ username: user.username, sub: user.id }),
+            };
+        } catch (err) {
+            throw new UnauthorizedException('Invalid or expired refresh token');
+        }
     }
 
     async login(user: any) {
